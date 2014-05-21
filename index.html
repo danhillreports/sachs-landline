@@ -1,0 +1,241 @@
+<!doctype html>
+<html>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+
+    h3 {
+      margin: 0px;
+    }
+
+    #landline_container {
+      width:95%;
+      /*max-width:600px;*/
+    }
+    svg {
+      top: 0px;
+    }
+    #landline_tooltip {
+      position:absolute;
+      background:rgba(222, 222, 222, 0.95);
+      z-index:999999;
+      font-family: Helvetica, Arial, sans-serif;
+      font-weight:bold;
+      font-size:12px;
+      padding:5px;
+      border-radius:2px;
+      box-shadow:0 0 5px #444;
+      display:none;
+    }
+    #landline_tooltip h2 {
+      margin:0;
+      padding:0;
+      font-size:14px;
+    }
+    #expectancy-container {
+      display: none;
+    }
+    .tooltip_sub {
+      font-size:12px;
+      font-weight:normal;
+      display:inline-block;
+      line-height:14px;
+    }
+    .legendContainer {
+      background: #FFFFFF;
+    }
+    .legendContainer ul li {
+      font-size: 0.9em;
+      list-style: none;
+      margin-left: 0;
+      line-height: 18px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .legendContainer ul li span {
+      display: block;
+      float: left;
+      height: 16px;
+      width: 30px;
+      margin: 0 5px 0 0;
+      border: 1px solid #666666;
+    }
+    .legendContainer ul {
+      margin: 0;
+      padding: 0;
+      float: left;
+      clear: both;
+      list-style: none;
+    }
+  </style>
+  <!-- Bring your own copy of jQuery/Underscore/Raphael here -->
+  <script src="js/jquery-1.9.1.min.js"></script>
+  <script src="js/raphael-min.js"></script>
+  <script src="js/underscore.js"></script>
+
+
+  <!-- Load Landline -->
+  <script src="js/landline.js"></script>
+
+  <script src="data/data.js"></script>
+
+  <!-- Create a tooltip container -->
+  <script type="text/jst" id="landline_tooltip_tmpl">
+    <h2><%= n %></h2>
+    <span class="tooltip_sub">
+      Median income<br>
+      $<%= med_income %>
+      <span class='tooltip_moe'><br>± $<%= moe %></span>
+    </span>
+  </script>
+
+  <!-- Census median income data, via http://censusreporter.org/data/map/?table=B06011&geo_ids=040|01000US -->
+
+  <body>
+    <div id="landline_container"></div>
+    <div align="center">
+       <div class="legendContainer" id="growth-legend">
+        <ul>
+          <li>
+            <span style="background-color: #870307"></span>&lt;= -2.5%
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <span style="background-color: #fc874c"></span>2.5% &mdash; 0%
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <span style="background-color: #8f5082"></span>0% &mdash; 2.5%
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <span style="background-color: #1b0fbd"></span>&gt;= 2.5%
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <span style="background-color: #b0b0b0"></span>No data
+          </li>
+        </ul>
+      </div>
+      <div class="legendContainer" id="expectancy-legend">
+        <ul>
+          <li>
+            <span style="background-color: #870307"></span>&lt;= 40
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <span style="background-color: #fc874c"></span>2.5% &mdash; 40-55
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <span style="background-color: #8f5082"></span>0% &mdash; 55-70
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <span style="background-color: #1b0fbd"></span>&gt;= 70
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <span style="background-color: #b0b0b0"></span>No data
+          </li>
+        </ul>
+      </div>
+      <h3 id="header">GDP per capita growth, 2012</h3>
+      <input type="radio" name="metrics" class="metric-select" value="growth" checked=True>GDP growth
+      <input type="radio" name="metrics" class="metric-select" value="expectancy">Life expectancy
+    </div>
+    <script>
+      $(function() {
+        var writeHeader = function(metric) {
+          if (metric === 'growth') {
+            $('#header').text('GDP per capita growth, 2012');
+          } else {
+            $('#header').text('Life expectancy in years, 2012');
+          }
+        };
+
+        var showLegend = function(metric) {
+          var growth = $('#growth-legend');
+          var expectancy = $('#expectancy-legend');
+          if (metric === 'growth') {
+            growth.css('display', 'block');
+            expectancy.css('display', 'none');
+          } else {
+            growth.css('display', 'none');
+            expectancy.css('display', 'block');
+          }
+        }
+
+        var createMap = function(metric) {
+          writeHeader(metric);
+          showLegend(metric);
+          // Initialize the map
+          if ($('svg').length > 0 ) { $('svg').remove() ;}
+
+
+          var width = $("#landline_container").width(),
+              height = width * 0.5;
+
+          var map = new Landline(json).all();
+
+          var paper = Raphael(0, 80, width, height);
+
+          map.asSVG(width, height, function(svg, data) {
+            var path = paper.path(svg);
+
+            if (data._props.growth) {
+              path.attr("fill", data._props[metric].color);
+            }
+          });
+
+          // Set up the tooltip template
+          var tmpl = _.template($("#landline_tooltip_tmpl").html());
+
+          // Add tooltips, and cache the existing style
+          // to put it back in place on mouseout
+          $(map).on('mouseover', function(e, path, data) {
+            console.log('hi');
+            // data.existingStyle = (data.existingStyle || {});
+            // data.existingStyle["fill"]        = path.attr("fill");
+            // data.existingStyle["strokeWidth"] = path.attr("stroke-width");
+            // path.attr("fill", "#999").attr("stroke-width", 1);
+          });
+
+          $(map).on('mousemove', function(e, path, data) {
+            console.log('hi');
+            $("#landline_tooltip").html(tmpl({
+                n          : 'derp',
+                med_income : 'med derp',
+                moe        : 'moe derp'
+              })).css("left", e.pageX + 20).css("top", e.pageY + 20).show();
+          });
+
+          $(map).on('mouseout', function(e, path, data) {
+            $("#landline_tooltip").hide();
+            _(data.existingStyle).each(function(v, k) {
+              path.attr(k, v);
+            });
+          });
+        };
+
+        $('.metric-select').on('change', function(){
+          createMap($(this).val());
+        });
+
+        // Draw the map
+        createMap('growth');
+      });
+    </script>
+
+    <div id="landline_tooltip"></div>
+  </body>
+</html>
