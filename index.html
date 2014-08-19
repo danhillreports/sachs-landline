@@ -181,7 +181,6 @@
           // Initialize the map
           if ($('svg').length > 0 ) { $('svg').remove() ;}
 
-
           var width = $("#landline_container").width(),
               height = width * 0.5;
 
@@ -195,35 +194,6 @@
             if (data._props.growth) {
               path.attr("fill", data._props[metric].color);
             }
-          });
-
-          // Set up the tooltip template
-          var tmpl = _.template($("#landline_tooltip_tmpl").html());
-
-          // Add tooltips, and cache the existing style
-          // to put it back in place on mouseout
-          $(map).on('mouseover', function(e, path, data) {
-            console.log('hi');
-            // data.existingStyle = (data.existingStyle || {});
-            // data.existingStyle["fill"]        = path.attr("fill");
-            // data.existingStyle["strokeWidth"] = path.attr("stroke-width");
-            // path.attr("fill", "#999").attr("stroke-width", 1);
-          });
-
-          $(map).on('mousemove', function(e, path, data) {
-            console.log('hi');
-            $("#landline_tooltip").html(tmpl({
-                n          : 'derp',
-                med_income : 'med derp',
-                moe        : 'moe derp'
-              })).css("left", e.pageX + 20).css("top", e.pageY + 20).show();
-          });
-
-          $(map).on('mouseout', function(e, path, data) {
-            $("#landline_tooltip").hide();
-            _(data.existingStyle).each(function(v, k) {
-              path.attr(k, v);
-            });
           });
         };
 
