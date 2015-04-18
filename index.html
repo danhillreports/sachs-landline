@@ -84,9 +84,8 @@
   <script type="text/jst" id="landline_tooltip_tmpl">
     <h2><%= n %></h2>
     <span class="tooltip_sub">
-      Median income<br>
-      $<%= med_income %>
-      <span class='tooltip_moe'><br>± $<%= moe %></span>
+      GDP growth: <%= gdp %>%<br>
+      Life expectancy: <%= expectancy %> years
     </span>
   </script>
 
@@ -184,13 +183,38 @@
 
           var map = new Landline(json).all();
 
+          var tmpl = _.template($("#landline_tooltip_tmpl").html());
+
           var paper = Raphael(0, 80, width, height);
 
           map.asSVG(width, height, function(svg, data) {
             var path = paper.path(svg);
 
             if (data._props.growth) {
-              path.attr("fill", data._props[metric].color);
+              path.attr("fill", data.get(metric).color);
+
+              // Only make tooltips if data exist
+              if (data.get("growth")["expectancy"] !== "") {
+                path.mouseover(function(e) {
+                  $("#landline_tooltip").html(tmpl({
+                      n          : data.get("name"),
+                      expectancy : +parseFloat(data.get("expectancy")["expectancy"])
+                                                   .toFixed(0),
+                      gdp        : +parseFloat(data.get("growth")["expectancy"])
+                                                   .toFixed(2)
+                    })).css("left", e.pageX + 20).css("top", e.pageY + 20).show();
+
+                  this.attr("stroke-width", 2)
+                      .attr("stroke", "#F7E22E");
+                });
+
+                path.mouseout(function(e) {
+                  $("#landline_tooltip").hide();
+
+                  this.attr("stroke-width", 1)
+                      .attr("stroke", "#000");
+                });
+              }
             }
           });
         };
