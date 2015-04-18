@@ -153,22 +153,22 @@
     <script>
       $(function() {
         var writeHeader = function(metric) {
-          if (metric === 'growth') {
-            $('#header').text('GDP per capita growth, 2012');
+          if (metric === "growth") {
+            $("#header").text("GDP per capita growth, 2012");
           } else {
-            $('#header').text('Life expectancy in years, 2012');
+            $("#header").text("Life expectancy in years, 2012");
           }
         };
 
         var showLegend = function(metric) {
-          var growth = $('#growth-legend');
-          var expectancy = $('#expectancy-legend');
-          if (metric === 'growth') {
-            growth.css('display', 'block');
-            expectancy.css('display', 'none');
+          var growth = $("#growth-legend");
+          var expectancy = $("#expectancy-legend");
+          if (metric === "growth") {
+            growth.css("display", "block");
+            expectancy.css("display", "none");
           } else {
-            growth.css('display', 'none');
-            expectancy.css('display', 'block');
+            growth.css("display", "none");
+            expectancy.css("display", "block");
           }
         }
 
@@ -176,7 +176,7 @@
           writeHeader(metric);
           showLegend(metric);
           // Initialize the map
-          if ($('svg').length > 0 ) { $('svg').remove() ;}
+          if ($("svg").length > 0 ) { $("svg").remove() ;}
 
           var width = $("#landline_container").width(),
               height = width * 0.5;
@@ -219,12 +219,12 @@
           });
         };
 
-        $('.metric-select').on('change', function(){
+        $(".metric-select").on("change", function(){
           createMap($(this).val());
         });
 
         // Draw the map
-        createMap('growth');
+        createMap("growth");
       });
     </script>
 
